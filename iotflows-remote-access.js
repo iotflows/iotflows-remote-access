@@ -37,23 +37,31 @@ class iotflows_remote_access {
     async retreieveKey()
     {
         var self = this;
-        await fetch(`https://api.iotflows.com/v1/device_management/devices/${self.username}/key`, {headers: self.authHeader})        
-        .then(res => res.json())
-        .then(json => {            
-            var key = json.data.key
-            if (!fs.existsSync('/etc/iotflows-remote-access')){
-                fs.mkdirSync('/etc/iotflows-remote-access');
-            }
-            if (!fs.existsSync('/etc/iotflows-remote-access/.key')){
-                fs.mkdirSync('/etc/iotflows-remote-access/.key');
-            }
-            fs.writeFile('/etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile', key, function (err) {
-              if (err) throw err;
-              // console.log('Replaced!');
-              self.bash('sudo chmod 400 /etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile')
-            });
-        })
-        // console.log("Added key")
+        // invalid password?
+        try
+        {
+            await fetch(`https://api.iotflows.com/v1/device_management/devices/${self.username}/key`, {headers: self.authHeader})        
+            .then(res => res.json())
+            .then(json => {            
+                var key = json.data.key
+                if (!fs.existsSync('/etc/iotflows-remote-access')){
+                    fs.mkdirSync('/etc/iotflows-remote-access');
+                }
+                if (!fs.existsSync('/etc/iotflows-remote-access/.key')){
+                    fs.mkdirSync('/etc/iotflows-remote-access/.key');
+                }
+                fs.writeFile('/etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile', key, function (err) {
+                if (err) throw err;                
+                self.bash('sudo chmod 400 /etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile')
+                });
+            })            
+        }
+        catch(e)
+        {
+            console.log("Wrong credentials.")
+            return false;
+        }
+        
     }
     
     async connect()
@@ -66,9 +74,9 @@ class iotflows_remote_access {
         .then(json => self.topics = json.data)            
         
         // invalid password?
-        if(!self.topics) 
+        if(!self.topics)
         {
-            console.log("Wrong credentials.")
+            // console.log("Wrong credentials.")
             return false;
         }
                 
@@ -84,19 +92,14 @@ class iotflows_remote_access {
         this.iotflows.client.on('connect', function () {
 
             // Send birth message                                                
-            self.iotflows.client.publish(self.topics.birth_topic, JSON.stringify({"device_uuid": self.username, "online": true, "timestamp": Date.now()}))                
-            console.log("Sent the birth message.")                    
+            self.iotflows.client.publish(self.topics.birth_topic, JSON.stringify({"device_uuid": self.username, "online": true, "timestamp": Date.now()}))                            
 
             // Subscribe to cloud commands
             self.iotflows.client.subscribe(self.topics.subscribing_topic, function (err) {             
-                if(err) {
-                    console.log(err)       
+                if(err) {                    
                     console.log("Make sure you are using the right credentials.")
                 }
                 else {
-                    console.log("Successfully activated the device management.")
-                    console.log("Subscribed to: " + self.topics.subscribing_topic);   
-
                     // start the nodered server
                     self.iotflows_managed_nodered = new IoTFlowsManagedNodeRED(self.username, self.password)
                     self.iotflows_managed_nodered.start();
@@ -113,18 +116,14 @@ class iotflows_remote_access {
             let command = messageJSON.command;
             if(command)
             {                
-                command = Buffer.from(command, 'base64').toString('ascii')
-                console.log("Received a commend:")
-                console.log(command)                                    
-
+                command = Buffer.from(command, 'base64').toString('ascii')                
                 if(command)
                 {                                                            
                     try
                     {
                         // execute the command
                         self.bash(command);    
-                        // respond back success message
-                        console.log("Responding success message back.")
+                        // respond back success message                    
                         let payload = JSON.stringify({
                             "device_uuid": self.username, 
                             "req": messageJSON, 
@@ -137,7 +136,7 @@ class iotflows_remote_access {
                     }
                     catch(e)
                     {
-                        console.log(e)
+                        // console.log(e)
                     }                    
                 }
             }
@@ -159,18 +158,17 @@ class iotflows_remote_access {
 
     // Execute a bash command
     bash(command) 
-    {
-        console.log("Executing this command...")
+    {        
         exec(command, (error, stdout, stderr) => {
             if (error) {
-                console.log(`error: ${error.message}`);
+                // console.log(`error: ${error.message}`); 
                 return;
             }
             if (stderr) {
-                console.log(`stderr: ${stderr}`);
+                // console.log(`stderr: ${stderr}`);
                 return;
             }
-            console.log(`stdout: ${stdout}`);
+            // console.log(`stdout: ${stdout}`);
         });    
     }
 }

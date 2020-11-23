@@ -46,10 +46,10 @@ const setCredentials = async () =>
     process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = password;
     fs.writeFile('.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
         if (err) throw err;
-        console.log('Credentials stored.');
+        // console.log('Credentials stored.');
     });
     
-    console.log('Credentials set.')   
+    // console.log('Credentials set.')   
     begin();
 }
 

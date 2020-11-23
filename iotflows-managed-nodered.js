@@ -1,4 +1,4 @@
-8000/**
+/**
  * Copyright 2020 IoTFlows Inc. All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -7,7 +7,7 @@
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable laconsole.w or agreed to in writing, software
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -20,7 +20,6 @@ var express = require("express");
 var fs = require("fs");
 var fetch = require('node-fetch');
 var runtime = require("@node-red/runtime");
-
     
 class iotflows_managed_nodered {
             
@@ -84,11 +83,9 @@ class iotflows_managed_nodered {
             headers: self.authHeader
         })
         .then(res => res.json())
-        .then(json => {        
-            console.log(json)
+        .then(json => {                    
             if(json && json.data){
-                cloudSettings = json.data.nodered_settings || {}
-                console.log(cloudSettings)
+                cloudSettings = json.data.nodered_settings || {}                
             }else{
                 cloudSettings = {}
             }   

@@ -1,11 +1,15 @@
 {
   "name": "@iotflows/iotflows-remote-access",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "description": "IoTFlows Remote Access and health monitoring tool.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iotflows/iotflows-remote-access.git"
   },
   "dependencies": {
     "ajv": "6.12.0",
@@ -30,7 +34,6 @@
     "inquirer": "^7.3.3",
     "is-utf8": "0.2.1",
     "js-yaml": "3.13.1",
-    "keytar": "^6.0.1",
     "media-typer": "1.1.0",
     "mqtt": "2.18.8",
     "multer": "1.4.2",
@@ -62,5 +65,5 @@
     "Ulises Carrasco"
   ],
   "license": "Apache-2.0",
-  "bin": "index.js"  
+  "bin": "index.js"
 }

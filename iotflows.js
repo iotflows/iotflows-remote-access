@@ -40,16 +40,13 @@ class iotflows {
                 payload: willPayload,
                 qos: 2,
                 retain: false
-            }
-            console.log("Will message set.")
+            }            
         }
-        
-        console.log("this.options")
-        console.log(this.options)
+                
         this.client = mqtt.connect('wss://wss.connect.iotflows.com:443/mqtt', this.options)
 
         this.client.on('connect', function () {
-            console.log("Connected to broker.")            
+            console.log("Connected to server.")            
         })
 
         this.client.on('message', function (topic, message) {  
