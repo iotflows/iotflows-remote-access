@@ -28,16 +28,11 @@ Check out https://docs.iotflows.com/remote-access for full instructions on getti
 ## Installation
 ### Prerequisites
 To install IoTFlows Remote Access, you will need a supported version of [Node.js](https://nodejs.org/en/download/).
-- Ubuntu
-`curl -sL https://deb.nodesource.com/setup_15.x | sudo -E bash -`
-`sudo apt-get install -y nodejs`
+- If your operating system supports apt:
+`sudo apt update`
+`sudo apt install npm`
+`sudo apt install nodejs`
 
-- Debian, as root
-`curl -sL https://deb.nodesource.com/setup_15.x | bash -`
-`apt-get install -y nodejs`
-
-- macOS
-`brew install node`
 - [Windows Installer](https://nodejs.org/en/#home-downloadhead)
 
 ### IoTFlows Console Setup
@@ -50,4 +45,12 @@ To install IoTFlows Remote Access, you will need a supported version of [Node.js
     * `sudo iotflows-remote-access`
 2. Enter the remote access credentials (username and password)
 3. In IoTFlows Console, create a Remote Connection for Node-RED or SSH and follow the instructions to remotely access your device. 
+4. After rebooting your device, IoTFlow Remote Access will auto start on boot.
+    * To stop the service:
+    `sudo systemctl stop iotflows-remote-access.service`
 
+    * To start the service:
+    `sudo systemctl start iotflows-remote-access.service`
+
+    * To disable the service:
+    `sudo systemctl disable iotflows-remote-access.service`
