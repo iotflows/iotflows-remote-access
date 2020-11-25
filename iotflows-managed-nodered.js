@@ -40,6 +40,7 @@ class iotflows_managed_nodered {
             mqttReconnectTime: 15000,
             serialReconnectTime: 15000,
             debugMaxLength: 1000,
+            userDir: require('os').homedir() + "/.node-red/",
             functionGlobalContext: {
                 os:require('os')                
             },    
@@ -58,25 +59,26 @@ class iotflows_managed_nodered {
         }
         
         // Grab current settings of Node-RED if exists
-        if(fs.existsSync(this.homeDir + "/.node-red"))
+        if(!fs.existsSync(this.homeDir + "/.node-red"))
         {
-            self.iotflowsSettings.userDir = require('os').homedir() + "/.node-red/"
-            try 
-            {
-                self.currentSettings = require(require('os').homedir() + "/.node-red/settings.js")  
-                try {delete self.currentSettings.adminAuth} catch(e){}
-                try {delete self.currentSettings.httpNodeAuth} catch(e){}
-                try {delete self.currentSettings.httpStaticAuth} catch(e){}                
-            }
-            catch(e){}
+            fs.mkdirSync(this.homeDir + "/.node-red");
         }
+
+        try 
+        {
+            self.currentSettings = require(require('os').homedir() + "/.node-red/settings.js")  
+            try {delete self.currentSettings.adminAuth} catch(e){}
+            try {delete self.currentSettings.httpNodeAuth} catch(e){}
+            try {delete self.currentSettings.httpStaticAuth} catch(e){}                
+        }
+        catch(e){}
+    
         
     }
 
     async start()
     {
-        var self = this;        
-                      
+        var self = this;
         // Read cloud settings 
         let cloudSettings = {}
         await fetch(`https://api.iotflows.com/v1/devices/${self.username}/nodered/settings`, {

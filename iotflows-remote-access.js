@@ -54,14 +54,15 @@ class iotflows_remote_access {
                 if (err) throw err;                
                 self.bash('sudo chmod 400 /etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile')
                 });
-            })            
+            })              
+            return true;
         }
         catch(e)
         {
             console.log("Wrong credentials.")
             return false;
         }
-        
+                
     }
     
     async connect()

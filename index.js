@@ -20,6 +20,8 @@
 const inquirer = require('inquirer')
 require('dotenv').config({path: '/etc/iotflows-remote-access/.env'})
 var fs = require('fs');
+const { exec, spawn } = require("child_process");
+
 
 
 // Set new username password for this device
@@ -76,7 +78,7 @@ const deleteCredentials = async () =>
 
 // Begin the app with an async function
 const begin = async () =>
-{
+{    
     // Check arguments (delete or set username password if they are passed)
     var args = {}
     process.argv.slice(2).map(eachArg => { args[eachArg.split('=')[0]] = eachArg.split('=')[1] } )
@@ -104,13 +106,56 @@ const begin = async () =>
         {
             var IoTFlowsRemoteAccess = require('./iotflows-remote-access');
             var iotflows_remote_access = new IoTFlowsRemoteAccess(username, password)
-            await iotflows_remote_access.retreieveKey();
+            await iotflows_remote_access.retreieveKey();            
             let connect_request = await iotflows_remote_access.connect();
             if(!connect_request)
             {
                 setCredentials();
                 return
-            }            
+            } 
+            else
+            {
+                // Credentials were correct
+                // Update systemd to autorun                                                
+                const systemdConfig = 
+`[Unit]
+Description=Runner for IoTFlows Remote Access
+Before=multi-user.target
+After=network.target
+
+[Service]
+User=root
+Type=simple
+Restart=on-failure
+TimeoutSec=5min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=yes
+ExecStart=/usr/bin/env iotflows-remote-access
+
+[Install]
+WantedBy=multi-user.target`
+
+                try{
+                    if (!fs.existsSync('/etc/systemd')){
+                        fs.mkdirSync('/etc/systemd');
+                    }
+                    if (!fs.existsSync('/etc/systemd/system')){
+                        fs.mkdirSync('/etc/systemd/system');
+                    }
+                    fs.writeFile('/etc/systemd/system/iotflows-remote-access.service', systemdConfig, function (err) {
+                        if (err) throw err;
+                        bash('sudo systemctl daemon-reload')
+                        bash('sudo systemctl enable iotflows-remote-access.service')
+                        console.log("Activated systemd to run iotflows-remote-access on boot.")
+                    })
+                }
+                catch(e)
+                {
+                    console.log("Couldn't set up systemd to run iotflows-remote-access on boot.")
+                }                
+            }           
         }
         else
         {
@@ -120,6 +165,23 @@ const begin = async () =>
         }            
     }
 }
+
+// Execute a bash command
+const bash = async (command) =>
+{        
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            // console.log(`error: ${error.message}`); 
+            return;
+        }
+        if (stderr) {
+            // console.log(`stderr: ${stderr}`);
+            return;
+        }
+        // console.log(`stdout: ${stdout}`);
+    });    
+}
+
 
 // Start the program
 console.log('Welcome to IoTFlows Remote Access service.')    
