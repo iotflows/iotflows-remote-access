@@ -1,6 +1,6 @@
 {
   "name": "@iotflows/iotflows-remote-access",
-  "version": "1.0.4",
+  "version": "1.0.6",
   "description": "IoTFlows Remote Access and health monitoring tool.",
   "main": "index.js",
   "scripts": {

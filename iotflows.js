@@ -46,7 +46,7 @@ class iotflows {
         this.client = mqtt.connect('wss://wss.connect.iotflows.com:443/mqtt', this.options)
 
         this.client.on('connect', function () {
-            console.log("Connected to server.")            
+            console.log("Connected to the server.")            
         })
 
         this.client.on('message', function (topic, message) {  

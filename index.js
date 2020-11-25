@@ -18,13 +18,14 @@
 
 "use strict";
 const inquirer = require('inquirer')
-require('dotenv').config()
+require('dotenv').config({path: '/etc/iotflows-remote-access/.env'})
 var fs = require('fs');
 
 
 // Set new username password for this device
 const setCredentials = async () =>
 {
+    console.log('Please enter the remote access credentials generated in https://console.iotflows.com.')    
     var questions = [{
         type: 'input',
         name: 'username',
@@ -44,10 +45,22 @@ const setCredentials = async () =>
 
     process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME = username;
     process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = password;
-    fs.writeFile('.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
-        if (err) throw err;
-        // console.log('Credentials stored.');
-    });
+    
+    try{
+        if (!fs.existsSync('/etc/iotflows-remote-access')){
+            fs.mkdirSync('/etc/iotflows-remote-access');
+        }    
+    
+        fs.writeFile('/etc/iotflows-remote-access/.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
+            if (err) throw err;
+            // console.log('Credentials stored.');
+        });
+    }
+    catch(e)
+    {
+        console.log("Permission not allowed - can't configure the settings.")
+    }
+    
     
     // console.log('Credentials set.')   
     begin();
@@ -64,12 +77,6 @@ const deleteCredentials = async () =>
 // Begin the app with an async function
 const begin = async () =>
 {
-    console.log(
-    `
-    Welcome to IoTFlows Remote Access service.
-    You can enter your username and password`
-    )    
-
     // Check arguments (delete or set username password if they are passed)
     var args = {}
     process.argv.slice(2).map(eachArg => { args[eachArg.split('=')[0]] = eachArg.split('=')[1] } )
@@ -115,4 +122,5 @@ const begin = async () =>
 }
 
 // Start the program
+console.log('Welcome to IoTFlows Remote Access service.')    
 begin()
