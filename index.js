@@ -89,6 +89,11 @@ const begin = async () =>
     
     if(args.username && args.password)
     {
+        console.log("args.username")
+        console.log(args.username)
+        console.log("args.password")
+        console.log(args.password)
+        
         process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME = args.username;
         process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = args.password;        
     }
