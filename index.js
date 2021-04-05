@@ -126,12 +126,14 @@ const begin = async () =>
 `[Unit]
 Description=Runner for IoTFlows Remote Access
 Before=multi-user.target
-After=network.target
+After=network-online.target
+Wants=network-online.target systemd-networkd-wait-online.service
 
 [Service]
 User=root
 Type=simple
 Restart=on-failure
+RestartSec=5s
 TimeoutSec=5min
 IgnoreSIGPIPE=no
 KillMode=process
@@ -188,6 +190,28 @@ const bash = async (command) =>
 }
 
 
-// Start the program
+// Start the program if the internet is connected
 console.log('Welcome to IoTFlows Remote Access service.')    
-begin()
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}  
+async function checkInternet() {
+    await require('dns').resolve('www.google.com',  async function(err) {
+        if (err) {
+            console.log("No internet connection. Retrying in 5 seconds.");
+             await sleep(5000)
+             checkInternet()
+        } else {
+            internetConnected = true            
+            begin()
+        }
+    });  
+}
+
+// ensure internet connectivity
+var internetConnected = false
+checkInternet()
+
+
+
