@@ -190,12 +190,13 @@ const bash = async (command) =>
 }
 
 
-// Start the program if the internet is connected
+// Start the program if the internet is connected and we could connect to the cloud
 console.log('Welcome to IoTFlows Remote Access service.')    
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }  
+
 async function checkInternet() {
     await require('dns').resolve('www.google.com',  async function(err) {
         if (err) {
@@ -204,9 +205,21 @@ async function checkInternet() {
              checkInternet()
         } else {
             internetConnected = true            
-            begin()
+            tryLaunching()
         }
     });  
+}
+
+async function tryLaunching() {
+    try {
+        begin()
+    }
+    catch(e){
+        console.log("Failed to connect to the cloud. Retrying in 30 seconds.");
+        console.log(e)
+        await sleep(30000)
+        tryLaunching()
+    }
 }
 
 // ensure internet connectivity
