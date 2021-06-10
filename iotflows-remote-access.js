@@ -73,7 +73,8 @@ class iotflows_remote_access {
         await fetch(`https://api.iotflows.com/v1/device_management/devices/${self.username}/topics`, {headers: self.authHeader})
         .then(res => res.json())
         .then(json => self.topics = json.data)            
-        
+        .catch(e => console.log('Error ' + e));
+
         // invalid password?
         if(!self.topics)
         {

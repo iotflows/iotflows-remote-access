@@ -24,8 +24,8 @@ const { exec, spawn } = require("child_process");
 
 
 
-// Set new username password for this device
-const setCredentials = async () =>
+// Ask user to enter new username password for this device
+const promptUserSetCredentials = async () =>
 {
     console.log('Please enter the remote access credentials generated in https://console.iotflows.com.')    
     var questions = [{
@@ -47,24 +47,7 @@ const setCredentials = async () =>
 
     process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME = username;
     process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = password;
-    
-    try{
-        if (!fs.existsSync('/etc/iotflows-remote-access')){
-            fs.mkdirSync('/etc/iotflows-remote-access');
-        }    
-    
-        fs.writeFile('/etc/iotflows-remote-access/.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
-            if (err) throw err;
-            // console.log('Credentials stored.');
-        });
-    }
-    catch(e)
-    {
-        console.log("Permission not allowed - can't configure the settings.")
-    }
-    
-    
-    // console.log('Credentials set.')   
+        
     begin();
 }
 
@@ -73,7 +56,21 @@ const setCredentials = async () =>
 const deleteCredentials = async () =>
 {    
     delete process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME
-    delete process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD    
+    delete process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD  
+    try{
+        if (!fs.existsSync('/etc/iotflows-remote-access')){
+            fs.mkdirSync('/etc/iotflows-remote-access');
+        }    
+    
+        fs.writeFile('/etc/iotflows-remote-access/.env','', function (err) {
+            if (err) throw err;
+            // console.log('Removed current credentials.');
+        });  
+    }
+    catch(e)
+    {
+        console.log("Permission not allowed - can't delete the settings.")
+    }    
 }
 
 // Begin the app with an async function
@@ -89,18 +86,17 @@ const begin = async () =>
     
     if(args.username && args.password)
     {
-        console.log("args.username")
-        console.log(args.username)
-        console.log("args.password")
-        console.log(args.password)
-        
+        // console.log("args.username")
+        // console.log(args.username)
+        // console.log("args.password")
+        // console.log(args.password)        
         process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME = args.username;
         process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = args.password;        
     }
     
     if( process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME == undefined || process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD == undefined)
     {
-        setCredentials(); 
+        promptUserSetCredentials(); 
         return;
     }
     else
@@ -109,17 +105,32 @@ const begin = async () =>
         let password = process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD
         if(username && password)
         {
+            // Store the credentials
+            try {
+                if (!fs.existsSync('/etc/iotflows-remote-access'))
+                    fs.mkdirSync('/etc/iotflows-remote-access');
+                             
+                fs.writeFile('/etc/iotflows-remote-access/.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
+                    if (err) throw err;
+                    // console.log('Credentials stored.');
+                });
+            }
+            catch(e) {
+                console.log("Permission not allowed - can't configure the settings.")
+            }    
+            // console.log('Credentials set.')   
+
             var IoTFlowsRemoteAccess = require('./iotflows-remote-access');
             var iotflows_remote_access = new IoTFlowsRemoteAccess(username, password)
             await iotflows_remote_access.retreieveKey();            
             let connect_request = await iotflows_remote_access.connect();
-            if(!connect_request)
-            {
-                setCredentials();
-                return
+            if(!connect_request) {                
+                // Retry 
+                console.log("Bad connection. This can be due to wrong credentials or lack of access to https://api.iotflows.com/. Trying again in 10 seconds.");
+                await sleep(10000)
+                begin()                
             } 
-            else
-            {
+            else {
                 // Credentials were correct
                 // Update systemd to autorun                                                
                 const systemdConfig = 
@@ -155,7 +166,11 @@ WantedBy=multi-user.target`
                         if (err) throw err;
                         bash('sudo systemctl daemon-reload')
                         bash('sudo systemctl enable iotflows-remote-access.service')
-                        console.log("Activated systemd to run iotflows-remote-access on boot.")
+                        console.log("Activated systemd to run iotflows-remote-access on boot.")                        
+                        // run the service and exit
+                        bash('sudo systemctl start iotflows-remote-access.service')
+                        await sleep(1000)
+                        process.exit(1)
                     })
                 }
                 catch(e)
@@ -167,7 +182,7 @@ WantedBy=multi-user.target`
         else
         {
             console.log("Bad credentials.")
-            setCredentials();
+            promptUserSetCredentials();
             return
         }            
     }
@@ -189,29 +204,15 @@ const bash = async (command) =>
     });    
 }
 
-
-// Start the program if the internet is connected and we could connect to the cloud
-console.log('Welcome to IoTFlows Remote Access service.')    
-
+// helper sleep function
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }  
 
-async function checkInternet() {
-    await require('dns').resolve('www.google.com',  async function(err) {
-        if (err) {
-            console.log("No internet connection. Retrying in 5 seconds.");
-             await sleep(5000)
-             checkInternet()
-        } else {
-            internetConnected = true            
-            tryLaunching()
-        }
-    });  
-}
-
+// try connectting to the cloud
 async function tryLaunching() {
     try {
+        // start the application
         begin()
     }
     catch(e){
@@ -222,9 +223,27 @@ async function tryLaunching() {
     }
 }
 
-// ensure internet connectivity
+
 var internetConnected = false
-checkInternet()
+// helper function to check the internet and cloud
+async function checkInternetAndCloud() {
+    await require('dns').resolve('www.google.com',  async function(err) {
+        if (err) {
+            console.log("No internet connection. Retrying in 5 seconds.");
+            await sleep(5000)
+            checkInternet()
+        } else {
+            internetConnected = true    
+            // connect to the cloud        
+            tryLaunching()
+        }
+    });  
+}
+
+
+// Start the program if the internet is connected and we could connect to the cloud
+console.log('Welcome to IoTFlows Remote Access service.')    
+checkInternetAndCloud()
 
 
 
