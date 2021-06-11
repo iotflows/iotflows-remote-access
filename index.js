@@ -155,6 +155,8 @@ ExecStart=/usr/bin/env iotflows-remote-access
 [Install]
 WantedBy=multi-user.target`
 
+
+
                 try{
                     if (!fs.existsSync('/etc/systemd')){
                         fs.mkdirSync('/etc/systemd');
@@ -162,16 +164,24 @@ WantedBy=multi-user.target`
                     if (!fs.existsSync('/etc/systemd/system')){
                         fs.mkdirSync('/etc/systemd/system');
                     }
-                    fs.writeFile('/etc/systemd/system/iotflows-remote-access.service', systemdConfig, function (err) {
+                
+                    fs.writeFile('/etc/systemd/system/iotflows-remote-access.service', systemdConfig, async function (err) {
                         if (err) throw err;
                         bash('sudo systemctl daemon-reload')
-                        bash('sudo systemctl enable iotflows-remote-access.service')
-                        console.log("Activated systemd to run iotflows-remote-access on boot.")                        
-                        // run the service and exit
-                        bash('sudo systemctl start iotflows-remote-access.service')
-                        await sleep(1000)
-                        process.exit(1)
+                        bash('sudo systemctl enable iotflows-remote-access.service')                                          
+                        console.log("Activated iotflows-remote-access to autorun on reboot/disconnections.")
                     })
+                    
+                    // if the service is not active, activate it and exit from this installation
+                    exec('sudo systemctl is-active iotflows-remote-access.service', (error, stdout, stderr) => {                                                
+                        if(stdout.includes('inactive'))
+                        {
+                            console.log("Installation successful - your device will light up in IoTFlows Console in a moment.")                        
+                            bash('sudo systemctl restart iotflows-remote-access.service')                        
+                            process.exit(1) 
+                        }
+                    });    
+                                                             
                 }
                 catch(e)
                 {
@@ -189,7 +199,7 @@ WantedBy=multi-user.target`
 }
 
 // Execute a bash command
-const bash = async (command) =>
+function bash(command) 
 {        
     exec(command, (error, stdout, stderr) => {
         if (error) {
