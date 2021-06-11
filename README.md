@@ -2,7 +2,7 @@
 
 https://iotflows.com
 
-Managed remote SSH and remote Node-RED for IoT gateways.
+IoTFlow Remote Access Agent for remote SSH and remote Node-RED for IoT gateways.
 
 By installing this application on your device, you can: 
 1. Remotely SSH to your device 
@@ -15,15 +15,23 @@ By installing this application on your device, you can:
 ![IoTFlows-Remote-Access: Managed remote SSH and remote Node-RED for IoT gateways.](/images/iotflows-console.png)
 ![IoTFlows-Remote-Access: Managed remote SSH and remote Node-RED for IoT gateways.](/images/remote-nodered.png)
 
-## Quick Start
 
 Check out https://docs.iotflows.com for full instructions on getting started.
 
-1. Install [Node.js](https://nodejs.org)
-2. Generate a remote client username/password for your device in [IoTFlows Console](https://console.iotflows.com).
-3. `sudo npm install -g --unsafe-perm @iotflows/iotflows-remote-access`
-4. `sudo iotflows-remote-access`
-5. Activate Remote SSH or Remote Node-RED in IoTFlows Console and follow the instructions to connect to your device. The default credentials are `admin` and `password` for remote Node-RED.
+## Quick Start
+
+1. Generate a Remote Connection Access Key for your device in [IoTFlows Console](https://console.iotflows.com) and run the following commands on your IoT device 
+2. Run the following command on your IoT device:
+
+I) For Debian-Based Operating System (e.g. Ubuntu, MX Linux. Linux Mint Desktop, Raspberry Pi OS):
+`bash <(sudo curl -s https://cdn.iotflows.com/update-nodejs-and-iotflows-remote-access.sh) --username=xxxx --password=yyyy --confirm-install`
+
+II) For Other Operating Systems:
+- Install npm and [Node.js](https://nodejs.org/en/)
+- Install IoTFlows Remote Access: `sudo npm install -g --unsafe-perm @iotflows/iotflows-remote-access`
+- Connect the agent to the cloud: `sudo iotflows-remote-access username=xxxx password=yyyy command=reset_credentials`
+
+3. In the Remote Connections tab in the console, create and enable Remote SSH or Remote Node-RED and follow the instructions to connect to your device. The default credentials for remote Node-RED are `admin` and `password`.
 
 ## Installation
 ### Prerequisites
@@ -42,7 +50,7 @@ To install IoTFlows Remote Access, you will need a supported version of [Node.js
 ### IoT Device Setup
 1. Run the following commands on your device:   
     * `sudo npm install -g --unsafe-perm @iotflows/iotflows-remote-access`
-    * `sudo iotflows-remote-access`
+    * `sudo iotflows-remote-access username=xxxx password=yyyy command=reset_credentials`
 2. Enter the remote access credentials (username and password)
 3. In IoTFlows Console, create a Remote Connection for Node-RED or SSH and follow the instructions to remotely access your device. 
 4. After rebooting your device, IoTFlow Remote Access will auto start on boot.
