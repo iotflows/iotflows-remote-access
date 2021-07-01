@@ -241,7 +241,7 @@ async function checkInternetAndCloud() {
         if (err) {
             console.log("No internet connection. Retrying in 5 seconds.");
             await sleep(5000)
-            checkInternet()
+            checkInternetAndCloud()
         } else {
             internetConnected = true    
             // connect to the cloud        
