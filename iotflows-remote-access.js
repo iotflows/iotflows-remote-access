@@ -18,7 +18,9 @@
 var IoTFlows = require("./iotflows")
 var IoTFlowsManagedNodeRED = require("./iotflows-managed-nodered")
 const fetch = require('node-fetch');
+const si = require('systeminformation');
 var fs = require('fs');
+
 
 const { exec, spawn } = require("child_process");
 
@@ -60,8 +62,7 @@ class iotflows_remote_access {
         {
             console.log("Wrong credentials.")
             return false;
-        }
-                
+        }                
     }
     
     async connect()
@@ -94,6 +95,13 @@ class iotflows_remote_access {
 
             // Send birth message                                                
             self.iotflows.client.publish(self.topics.birth_topic, JSON.stringify({"device_uuid": self.username, "online": true, "timestamp": Date.now()}))                            
+
+            // Start publishing system information
+            self.publish_system_information()
+            setInterval(function(){ 
+                self.publish_system_information()
+            }, 60*60*1000);
+            
 
             // Subscribe to cloud commands
             self.iotflows.client.subscribe(self.topics.subscribing_topic, function (err) {             
@@ -155,6 +163,28 @@ class iotflows_remote_access {
             }
         }) 
         return true;       
+    }
+
+    async publish_system_information()
+    {
+        let self = this;
+        let system_information = {}
+        try{
+            system_information.version = await si.version()
+            system_information.time = await si.time()
+            system_information.system = await si.system()
+            system_information.cpu = await si.cpu()
+            system_information.mem = await si.mem()
+            system_information.currentLoad = await si.currentLoad()  
+            system_information.osInfo = await si.osInfo()
+            system_information.networkInterfaces = await si.networkInterfaces()
+            system_information.networkInterfaceDefault = await si.networkInterfaceDefault()
+            system_information.networkGatewayDefault = await si.networkGatewayDefault()
+            system_information.networkStats = await si.networkStats()
+            system_information.diskLayout = await si.diskLayout()
+            self.iotflows.client.publish(self.topics.system_information, JSON.stringify({"device_uuid": self.username, "system_information": system_information, "timestamp": Date.now()}))
+        }
+        catch(err) { console.error(err); };
     }
 
     // Execute a bash command
