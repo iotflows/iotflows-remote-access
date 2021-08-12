@@ -20,7 +20,8 @@ var express = require("express");
 var fs = require("fs");
 var fetch = require('node-fetch');
 var runtime = require("@node-red/runtime");
-    
+const { exec, spawn } = require("child_process");
+
 class iotflows_managed_nodered {
             
     constructor(username, password) 
@@ -71,9 +72,7 @@ class iotflows_managed_nodered {
             try {delete self.currentSettings.httpNodeAuth} catch(e){}
             try {delete self.currentSettings.httpStaticAuth} catch(e){}                
         }
-        catch(e){}
-    
-        
+        catch(e){}        
     }
 
     async start()
@@ -103,6 +102,10 @@ class iotflows_managed_nodered {
         // IMPORTANT! COPY this object with no reference
         self.mergedSettings = JSON.parse(JSON.stringify(self.mergedSettings));
 
+        // Make sure Node-RED is not running
+        self.bash('sudo systemctl stop nodered.service');
+        self.bash('sudo systemctl disable nodered.service');
+        
         self.startServer();            
     }
 
@@ -146,6 +149,21 @@ class iotflows_managed_nodered {
         self.start();                                               
     }
 
+    // Execute a bash command
+    bash(command) 
+    {        
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                // console.log(`error: ${error.message}`); 
+                return;
+            }
+            if (stderr) {
+                // console.log(`stderr: ${stderr}`);
+                return;
+            }
+            // console.log(`stdout: ${stdout}`);
+        });    
+    }
     
 }
 

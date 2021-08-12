@@ -168,7 +168,7 @@ WantedBy=multi-user.target`
                     fs.writeFile('/etc/systemd/system/iotflows-remote-access.service', systemdConfig, async function (err) {
                         if (err) throw err;
                         bash('sudo systemctl daemon-reload')
-                        bash('sudo systemctl enable iotflows-remote-access.service')                                          
+                        bash('sudo systemctl enable iotflows-remote-access.service')
                         console.log("Activated iotflows-remote-access to autorun on reboot/disconnections.")
                     })
                     
