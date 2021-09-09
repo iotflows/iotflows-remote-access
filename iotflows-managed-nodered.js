@@ -77,36 +77,42 @@ class iotflows_managed_nodered {
 
     async start()
     {
-        var self = this;
-        // Read cloud settings 
-        let cloudSettings = {}
-        await fetch(`https://api.iotflows.com/v1/devices/${self.username}/nodered/settings`, {
-            headers: self.authHeader
-        })
-        .then(res => res.json())
-        .then(json => {                    
-            if(json && json.data){
-                cloudSettings = json.data.nodered_settings || {}                
-            }else{
-                cloudSettings = {}
-            }   
-        });     
-        
-        // Merge settings
-        self.mergedSettings = {
-            ...self.iotflowsSettings,
-            ...self.currentSettings,    
-            ...cloudSettings
-        };       
-        
-        // IMPORTANT! COPY this object with no reference
-        self.mergedSettings = JSON.parse(JSON.stringify(self.mergedSettings));
+        try{
+            var self = this;
+            // Read cloud settings 
+            let cloudSettings = {}
+            await fetch(`https://api.iotflows.com/v1/devices/${self.username}/nodered/settings`, {
+                headers: self.authHeader
+            })
+            .then(res => res.json())
+            .then(json => {                    
+                if(json && json.data){
+                    cloudSettings = json.data.nodered_settings || {}                
+                }else{
+                    cloudSettings = {}
+                }   
+            });     
+            
+            // Merge settings
+            self.mergedSettings = {
+                ...self.iotflowsSettings,
+                ...self.currentSettings,    
+                ...cloudSettings
+            };       
+            
+            // IMPORTANT! COPY this object with no reference
+            self.mergedSettings = JSON.parse(JSON.stringify(self.mergedSettings));
 
-        // Make sure Node-RED is not running
-        self.bash('sudo systemctl stop nodered.service');
-        self.bash('sudo systemctl disable nodered.service');
-        
-        self.startServer();            
+            // Make sure Node-RED is not running
+            self.bash('sudo systemctl stop nodered.service');
+            self.bash('sudo systemctl disable nodered.service');
+            
+            self.startServer();    
+        }        
+        catch(e)
+        {
+            console.error(e)
+        }
     }
 
     startServer()
@@ -140,13 +146,19 @@ class iotflows_managed_nodered {
 
     async restart()
     {
-        var self = this;     
+        try{
+            var self = this;     
                    
-        await self.server.close();            
-                                
-        await self.RED.stop();
+            await self.server.close();            
+                                    
+            await self.RED.stop();
+            
+            self.start();                                               
+        }
+        catch(e){
+            console.error(e)
+        }
         
-        self.start();                                               
     }
 
     // Execute a bash command
