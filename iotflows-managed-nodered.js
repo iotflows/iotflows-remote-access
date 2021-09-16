@@ -41,7 +41,7 @@ class iotflows_managed_nodered {
             mqttReconnectTime: 15000,
             serialReconnectTime: 15000,
             debugMaxLength: 1000,
-            userDir: require('os').homedir() + "/.node-red/",
+            userDir: __dirname + "/.node-red/",
             functionGlobalContext: {
                 os:require('os')                
             },    
@@ -60,14 +60,14 @@ class iotflows_managed_nodered {
         }
         
         // Grab current settings of Node-RED if exists
-        if(!fs.existsSync(this.homeDir + "/.node-red"))
+        if(!fs.existsSync(self.homeDir + "/.node-red"))
         {
-            fs.mkdirSync(this.homeDir + "/.node-red");
+            fs.mkdirSync(self.homeDir + "/.node-red");
         }
 
         try 
         {
-            self.currentSettings = require(require('os').homedir() + "/.node-red/settings.js")  
+            self.currentSettings = require(self.homeDir + "/.node-red/settings.js")  
             try {delete self.currentSettings.adminAuth} catch(e){}
             try {delete self.currentSettings.httpNodeAuth} catch(e){}
             try {delete self.currentSettings.httpStaticAuth} catch(e){}                
@@ -105,7 +105,7 @@ class iotflows_managed_nodered {
 
             // Make sure Node-RED is not running
             self.bash('sudo systemctl stop nodered.service');
-            self.bash('sudo systemctl disable nodered.service');
+            self.bash('sudo systemctl disable nodered.service');            
             
             self.startServer();    
         }        
