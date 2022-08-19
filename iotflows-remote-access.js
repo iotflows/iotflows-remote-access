@@ -60,7 +60,7 @@ class iotflows_remote_access {
         }
         catch(e)
         {
-            console.log("Wrong credentials.")
+            console.log(e)
             return false;
         }                
     }

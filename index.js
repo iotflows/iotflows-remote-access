@@ -56,6 +56,47 @@ const { exec, spawn } = require("child_process");
 //     begin();
 // }
 
+// Verify if device has been assigned
+function verifyAssignment() 
+{
+    return new Promise(resolve => {            
+
+        // if username or password not found, not registered
+        if(!process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME || !process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD) resolve(false)
+        
+        // Auth header
+        let authHeader = {'Authorization': 'Basic ' + Buffer.from(process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME + ":" + process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD).toString("base64")}
+
+        // Verify registeration from the cloud
+        try 
+        {
+            fetch(`https://api.iotflows.com/v1/iotflows/device-management/registration/devices/${process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME}/has-been-assigned`, {headers: authHeader})           
+            .then(async res => {
+                if(res.ok)
+                {                    
+                    let json = await res.json()                    
+                    if(json && json.data && json.data && json.data[0] && json.data[0].assigned)
+                    {                        
+                        ledCommand('ON')
+                        resolve(true)
+                    }
+                    else 
+                    {
+                        resolve(false)
+                    }
+                }
+                else{
+                    resolve(false)
+                }
+            })
+            .catch(err => {                
+                resolve(false)
+            })
+        } catch(e){console.log(e); resolve(false)}        
+    })
+}
+
+
 // Verify if credentials exists and device registered
 function verifyRegistration() 
 {
@@ -77,8 +118,7 @@ function verifyRegistration()
                     
                     let json = await res.json()                    
                     if(json && json.data && json.data && json.data.is_registered)
-                    {                        
-                        ledCommand('ON')
+                    {                                                
                         resolve(true)
                     }            
                 }
@@ -145,9 +185,8 @@ const acknowledgeRegistration = async (key, password, device_uuid) =>
                 let json = await res.json()
                 if(json && json.data && json.data && json.data.is_verified)
                 {
-                    console.log("New credentials have been verified! is_verified = true")
-                    await storeCredentials(device_uuid, password)
-                    ledCommand('ON')                    
+                    console.log("New credentials have been verified!")
+                    await storeCredentials(device_uuid, password)                    
                 }            
             }
             else{                
@@ -159,6 +198,7 @@ const acknowledgeRegistration = async (key, password, device_uuid) =>
 
 function storeCredentials(username, password)
 {
+    console.log(`Storing new credentials: ${username} ${password}`)
     return new Promise(async resolve => {           
         try 
         {
@@ -184,30 +224,30 @@ const ledCommand = (command) =>
     if(command == 'ON')
     {        
         console.log("Turn LED ON")
-        bash(`sudo bash -c "echo none >/sys/class/leds/led0/trigger"`)
-        bash(`sudo bash -c "echo 1 >/sys/class/leds/led0/brightness"`)
+        bash(`sudo bash -c "sudo echo none >/sys/class/leds/led0/trigger"`)
+        bash(`sudo bash -c "sudo echo 1 >/sys/class/leds/led0/brightness"`)
     }
     else if(command == 'OFF')
     {
         console.log("Turn LED OFF")
-        bash(`sudo bash -c "echo none >/sys/class/leds/led0/trigger"`)
-        bash(`sudo bash -c "echo 0 >/sys/class/leds/led0/brightness"`)            
+        bash(`sudo bash -c "sudo echo none >/sys/class/leds/led0/trigger"`)
+        bash(`sudo bash -c "sudo echo 0 >/sys/class/leds/led0/brightness"`)            
     }            
     else if(command == 'HEARTBEAT')
     {
         console.log("Turn LED OFF")
-        bash(`sudo bash -c "echo none >/sys/class/leds/led0/trigger"`)
-        bash(`sudo bash -c "echo heartbeat >/sys/class/leds/led0/trigger""`)            
+        bash(`sudo bash -c "sudo echo none >/sys/class/leds/led0/trigger"`)
+        bash(`sudo bash -c "sudo echo heartbeat >/sys/class/leds/led0/trigger"`)            
     }
     else if(command == 'BLINKSOME')
     {
         console.log("Blinking a few times")
 
-        bash(`sudo bash -c "echo none >/sys/class/leds/led0/trigger"`)
-        bash(`sudo bash -c "echo heartbeat >/sys/class/leds/led0/trigger""`)            
+        bash(`sudo bash -c "sudo echo none >/sys/class/leds/led0/trigger"`)
+        bash(`sudo bash -c "sudo echo heartbeat >/sys/class/leds/led0/trigger"`)            
 
         setTimeout( function() {
-            bash(`sudo bash -c "echo 0 >/sys/class/leds/led0/brightness"`)            
+            bash(`sudo bash -c "sudo echo 0 >/sys/class/leds/led0/brightness"`)            
         }, 5000);                
     }
 }
@@ -265,10 +305,10 @@ async function requestCloudRegistration()
 //     }    
 // }
 
-async function readArguments()
+function readArguments()
 {    
     // Check arguments (delete or set username password if they are passed)
-    return new Promise(resolve => {       
+    return new Promise(async resolve => {       
         var args = {}
         process.argv.slice(2).map(eachArg => { args[eachArg.split('=')[0]] = eachArg.split('=')[1] } )
 
@@ -282,6 +322,7 @@ async function readArguments()
         {    
             process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME = args.username;
             process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = args.password;        
+            await storeCredentials(process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME, process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD)
         }
 
         resolve()
@@ -326,14 +367,15 @@ WantedBy=multi-user.target`
             if (err) throw err;
             bash('sudo systemctl daemon-reload')
             bash('sudo systemctl enable iotflows-remote-access.service')
-            console.log("Activated iotflows-remote-access to autorun on reboot/disconnections.")
+            console.log("Activated iotflows-remote-access to autorun on reboots and disconnections.")
         })
         
         // if the service is not active, activate it and exit from this installation
         exec('sudo systemctl is-active iotflows-remote-access.service', (error, stdout, stderr) => {                                                
             if(stdout.includes('inactive'))
             {
-                console.log("Installation successful - your device will light up in IoTFlows Console in a moment.")                        
+                // console.log("Installation successful - your device will light up in IoTFlows Console in a moment.")                        
+                console.log("Terminating this process and running it as a service.")
                 bash('sudo systemctl restart iotflows-remote-access.service')                        
                 process.exit(1) 
             }
@@ -370,40 +412,6 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }  
 
-// // try connectting to the cloud
-// async function tryLaunching() {
-//     try {
-//         // verify if it has been registered before
-//         verifyHasBeenRegistered()
-//     }
-//     catch(e){
-//         console.log("Failed to connect to the cloud. Retrying in 30 seconds.");
-//         console.log(e)
-//         await sleep(30000)
-//         tryLaunching()
-//     }
-// }
-
-// // helper function to check the internet and cloud
-// async function checkInternetAndCloud() {
-//     await require('dns').resolve('www.google.com',  async function(err) {
-//         if (err) {
-//             console.log("No internet connection. Retrying in 5 seconds.");
-//             await sleep(5000)
-//             checkInternetAndCloud()
-//         } else {
-//             // connect to the cloud        
-//             tryLaunching()
-//         }
-//     });  
-// }
-
-
-// // Start the program if the internet is connected and we could connect to the cloud
-// console.log('Welcome to IoTFlows Remote Access service.')    
-// checkInternetAndCloud()
-
-
 //--------------------------------------------------------------------------------------------------
 // Verify Internet connection
 function verifyInternetConnection() {
@@ -417,23 +425,25 @@ function verifyInternetConnection() {
 
 async function main()
 {
-    console.log('Welcome to IoTFlows Remote Access service.')    
-    console.log('')
 
-    // verify internet connection
-    console.log("Verifying Internet connectivity...")
-    while(!(await verifyInternetConnection())) {console.log("No Internet connection. Verify connection again in 5s."); await sleep(5000)}
-    console.log("Done.")
-    console.log("")
-
+    console.log('Welcome to IoTFlows Remote Access service.'); console.log('');
+    
     // read passed arguments    
     await readArguments()
 
-    // verify if device registered
+    // set up systemd & launch from there
+    setupAutoRunAndRestart()
+
+    // verify Internet connection
+    console.log("Verifying Internet connectivity...")
+    while(!(await verifyInternetConnection())) {console.log("No Internet connection. Verify connection again in 5s."); await sleep(5000)}
+    console.log("Done."); console.log("");
+
+    // verify if device has been registered
     console.log("Verifying registeration...")
     var hasBeenRegistered = await verifyRegistration()    
 
-    // if not regietered, try registration every 60s
+    // if not regietered, try registration it every 60s
     var counter = 0
     while(!hasBeenRegistered)
     {
@@ -442,80 +452,32 @@ async function main()
             console.log("Sending a new registration request.")
             await requestCloudRegistration()
         }
-        
         hasBeenRegistered = await verifyRegistration()
-        if (!hasBeenRegistered) {await sleep(5000);}
-        
+        if (!hasBeenRegistered) {await sleep(5000);}        
         if(++counter == 12)
             counter = 0
     }
+    console.log("Done."); console.log("");
     
-    console.log("WE GOT HERE!!! Now connect to the cloud")
 
+    // verify if device has been assigned    
+    console.log("Verifying assignment...")
+    var hasBeenAssigned = await verifyAssignment()    
+    while(!hasBeenAssigned)
+    {        
+        hasBeenAssigned = await verifyAssignment()
+        if (!hasBeenAssigned) {console.log("Verifying assignment again in 10s"); await sleep(10000);}
+    }
+    console.log("Done."); console.log("");
 
-
-
+    // connect the agent to the server
+    console.log("Connect to the server.")
+    var IoTFlowsRemoteAccess = require('./iotflows-remote-access');
+    var iotflows_remote_access = new IoTFlowsRemoteAccess(process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME, process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD)
+    await iotflows_remote_access.retreieveKey();            
+    await iotflows_remote_access.connect();
 }
 
+
+// run the main function
 main()
-
-
-
-
-
-
-
-
-
-    // requestCloudRegistration()      
-    
-    // if(process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME == undefined || process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD == undefined)
-    // {
-    //     // promptUserSetCredentials(); // DEPRECATED        
-    //     return;
-    // }
-    // else
-    // {
-        // let username = process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME
-        // let password = process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD
-        // if(username && password)
-        // {
-        //     // Store the credentials
-        //     try {
-        //         if (!fs.existsSync('/etc/iotflows-remote-access'))
-        //             fs.mkdirSync('/etc/iotflows-remote-access');
-                             
-        //         fs.writeFile('/etc/iotflows-remote-access/.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
-        //             if (err) throw err;
-        //             // console.log('Credentials stored.');
-        //         });
-        //     }
-        //     catch(e) {
-        //         console.log("Permission not allowed - can't configure the settings.")
-        //     }    
-        //     // console.log('Credentials set.')   
-
-        //     var IoTFlowsRemoteAccess = require('./iotflows-remote-access');
-        //     var iotflows_remote_access = new IoTFlowsRemoteAccess(username, password)
-        //     await iotflows_remote_access.retreieveKey();            
-        //     let connect_request = await iotflows_remote_access.connect();
-        //     if(!connect_request) {                
-        //         // Retry 
-        //         console.log("Bad connection. This can be due to wrong credentials or lack of access to https://api.iotflows.com/. Trying again in 10 seconds.");
-        //         await sleep(10000)
-        //         begin()                
-        //     } 
-        //     else {
-        //         // Credentials were correct
-        //         // Update systemd to autorun & restart to run as a service                                                            
-        //         setupAutoRunAndRestart()
-        //     }           
-        // }
-        // else
-        // {
-        //     console.log("Bad credentials.")
-        //     // promptUserSetCredentials(); // DEPRECATED
-        //     requestCloudRegistration()
-        //     return
-        // }            
-    // }
