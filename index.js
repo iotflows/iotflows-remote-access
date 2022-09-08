@@ -28,8 +28,9 @@ const { exec, spawn } = require("child_process");
 
 // DEPRECATED
 // We no longer ask user to enter username and password with a prompt
-// They should either enter it in the installation, or as argument, or by QR code from cloud
-    // Ask user to enter new username password for this device
+// They should either enter it in the installation, or as arguments, or by QR code from cloud
+
+// Ask user to enter new username password for this device
 // const promptUserSetCredentials = async () =>
 // {
 //     console.log('Please enter the remote access credentials generated in https://console.iotflows.com.')    
@@ -178,7 +179,7 @@ const acknowledgeRegistration = async (key, password, device_uuid) =>
     // Verify registeration from the cloud
     try 
     {
-        await fetch(`https://api.iotflows.com/v1/iotflows/device-management/gateway/registration/acknowledgment/from-gateway?key=${key}`, {headers: authHeader})           
+        await fetch(`https://api.iotflows.com/v1/iotflows/device-management/gateways/registration/acknowledgment/from-gateway?key=${key}`, {headers: authHeader})           
         .then(async res => {
             if(res.ok)
             {
@@ -423,6 +424,10 @@ function verifyInternetConnection() {
     });
 }
 
+
+
+
+
 async function main()
 {
 
@@ -439,7 +444,7 @@ async function main()
     while(!(await verifyInternetConnection())) {console.log("No Internet connection. Verify connection again in 5s."); await sleep(5000)}
     console.log("Done."); console.log("");
 
-    // verify if device has been registered
+    // verify if device is registered
     console.log("Verifying registeration...")
     var hasBeenRegistered = await verifyRegistration()    
 
@@ -460,7 +465,7 @@ async function main()
     console.log("Done."); console.log("");
     
 
-    // verify if device has been assigned    
+    // verify if device is assigned    
     console.log("Verifying assignment...")
     var hasBeenAssigned = await verifyAssignment()    
     while(!hasBeenAssigned)
@@ -477,7 +482,6 @@ async function main()
     await iotflows_remote_access.retreieveKey();            
     await iotflows_remote_access.connect();
 }
-
 
 // run the main function
 main()
