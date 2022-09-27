@@ -23,8 +23,7 @@ const fetch = require('node-fetch');
 require('dotenv').config({path: '/etc/iotflows-remote-access/.env'})
 var fs = require('fs');
 const { exec, spawn } = require("child_process");
-
-
+const { stringify } = require("querystring");
 
 // DEPRECATED
 // We no longer ask user to enter username and password with a prompt
@@ -101,27 +100,30 @@ function verifyAssignment()
 // Verify if credentials exists and device registered
 function verifyRegistration() 
 {
-    return new Promise(resolve => {            
-
+    return new Promise(resolve => {                    
         // if username or password not found, not registered
         if(!process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME || !process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD) resolve(false)
         
         // Auth header
         let authHeader = {'Authorization': 'Basic ' + Buffer.from(process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME + ":" + process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD).toString("base64")}
-
+        
         // Verify registeration from the cloud
         try 
         {
+            
             fetch(`https://api.iotflows.com/v1/iotflows/device-management/gateways/registration/veritification`, {headers: authHeader})           
             .then(async res => {
                 if(res.ok)
                 {
-                    
                     let json = await res.json()                    
                     if(json && json.data && json.data && json.data.is_registered)
                     {                                                
                         resolve(true)
                     }            
+                    else
+                    {
+                        resolve(false)
+                    }
                 }
                 else{
                     resolve(false)
@@ -207,9 +209,11 @@ function storeCredentials(username, password)
             process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD = password
 
             // create directory if not exists
+            // if (!fs.existsSync('/etc/iotflows-remote-access'))
+            //     await bash(`sudo bash -c "sudo mkdir /etc/iotflows-remote-access"`)                
             if (!fs.existsSync('/etc/iotflows-remote-access'))
-                await bash(`sudo bash -c "sudo mkdir /etc/iotflows-remote-access"`)                
-
+                fs.mkdirSync('/etc/iotflows-remote-access');
+            
             // store (override) credentials
             await bash(`sudo bash -c 'sudo echo "IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n" > /etc/iotflows-remote-access/.env'`)            
             resolve()
@@ -357,13 +361,17 @@ ExecStart=/usr/bin/env iotflows-remote-access
 WantedBy=multi-user.target`
 
     try{
+
+        if (!fs.existsSync('/etc/iotflows-remote-access'))
+            fs.mkdirSync('/etc/iotflows-remote-access');
+                            
         if (!fs.existsSync('/etc/systemd')){
             fs.mkdirSync('/etc/systemd');
         }
         if (!fs.existsSync('/etc/systemd/system')){
             fs.mkdirSync('/etc/systemd/system');
         }
-    
+        
         fs.writeFile('/etc/systemd/system/iotflows-remote-access.service', systemdConfig, async function (err) {
             if (err) throw err;
             bash('sudo systemctl daemon-reload')
@@ -424,18 +432,14 @@ function verifyInternetConnection() {
     });
 }
 
-
-
-
-
 async function main()
 {
 
     console.log('Welcome to IoTFlows Remote Access service.'); console.log('');
-    
+
     // read passed arguments    
     await readArguments()
-
+    
     // set up systemd & launch from there
     setupAutoRunAndRestart()
 
@@ -447,6 +451,8 @@ async function main()
     // verify if device is registered
     console.log("Verifying registeration...")
     var hasBeenRegistered = await verifyRegistration()    
+    console.log('verifyRegistration')
+    console.log(verifyRegistration)
 
     // if not regietered, try registration it every 60s
     var counter = 0
@@ -481,6 +487,7 @@ async function main()
     var iotflows_remote_access = new IoTFlowsRemoteAccess(process.env.IOTFLOWS_REMOTE_ACCESS_USERNAME, process.env.IOTFLOWS_REMOTE_ACCESS_PASSWORD)
     await iotflows_remote_access.retreieveKey();            
     await iotflows_remote_access.connect();
+
 }
 
 // run the main function
