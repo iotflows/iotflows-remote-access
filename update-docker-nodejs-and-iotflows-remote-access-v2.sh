@@ -79,7 +79,7 @@ echo -e '\033]2;'IoTFlows Remote Access update'\007'
 echo " "
 echo "This script will install the latest version of Docker and will remove versions of "
 echo "Node.js prior to version 12.x, and if necessary replace them with Node.js 12.x LTS "
-echo "(erbium) and the latest of IoTFlows Remoet Access Agent."
+echo "(erbium) and the latest of IoTFlows Remote Access Agent."
 echo " "
 echo "It also tries to run 'npm rebuild' to refresh any extra nodes you have installed"
 echo "that may have a native binary component. While this normally works ok, you need"
@@ -130,10 +130,10 @@ case $yn in
         sudo rm -rf /usr/lib/node_modules/iotflows-remote-access* /usr/bin/iotflows-remote-access* 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null
         echo -ne '  Remove old version of IoTFlows Remote Access      \033[1;32m\u2714\033[0m\r\n'
 
-        echo -ne "  Install Docker latest                             $CHAR\r\n"
-#        curl -fsSL https://get.docker.com -o get-docker.sh
-#        sudo sh get-docker.sh
-        bash <(curl -fsSL https://get.docker.com)
+        echo -ne "  Install Docker LTS                                \r"
+        # use the official script to install the docker
+        if bash <(curl -fsSL https://get.docker.com) 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null; then CHAR=$TICK; else CHAR=$CROSS; fi        
+        echo -ne "  Install Docker LTS                                $CHAR\r\n"
                 
         nv="v0"
         nv2=""
@@ -191,7 +191,7 @@ case $yn in
                     echo "Removing nodejs "$nv | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null
                     sudo apt remove -y nodejs nodejs-legacy npm 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null
                     sudo rm -rf /etc/apt/sources.d/nodesource.list /usr/lib/node_modules/npm*
-                    if curl -sSL https://deb.nodesource.com/setup_12.x | sudo -E bash - 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null; then CHAR=$TICK; else CHAR=$CROSS; fi
+                    if curl -sSL https://deb.nodesource.com/setup_18.x | sudo -E bash - 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null; then CHAR=$TICK; else CHAR=$CROSS; fi
                 else
                     CHAR="-"
                 fi
@@ -218,7 +218,7 @@ case $yn in
                 echo -ne "  Install Node.js LTS                 \r"
                 # use the official script to install for other debian platforms
                 sudo apt install -y curl 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null
-                curl -sSL https://deb.nodesource.com/setup_12.x | sudo -E bash - 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null
+                curl -sSL https://deb.nodesource.com/setup_18.x | sudo -E bash - 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null
                 if sudo apt install -y nodejs 2>&1 | sudo tee -a /var/log/iotflows-remote-access-install.log >>/dev/null; then CHAR=$TICK; else CHAR=$CROSS; fi
                 echo -ne "  Install Node.js LTS                 $CHAR"
             fi

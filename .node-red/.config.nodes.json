@@ -358,28 +358,6 @@
             }
         }
     },
-    "node-red-contrib-iotflows": {
-        "name": "node-red-contrib-iotflows",
-        "version": "1.1.7",
-        "local": false,
-        "nodes": {
-            "iotflows": {
-                "name": "iotflows",
-                "types": [
-                    "datastream in",
-                    "datastream out",
-                    "alert channel out",
-                    "action start",
-                    "action finish",
-                    "mqtt-iotflows-broker"
-                ],
-                "enabled": true,
-                "local": false,
-                "module": "node-red-contrib-iotflows",
-                "file": "/Users/mahmoudpartodezfouli/Github/iotflows-remote-access/node_modules/node-red-contrib-iotflows/iotflows.js"
-            }
-        }
-    },
     "node-red-node-rbe": {
         "name": "node-red-node-rbe",
         "version": "0.2.9",
@@ -411,6 +389,28 @@
                 "local": false,
                 "module": "node-red-node-tail",
                 "file": "/Users/mahmoudpartodezfouli/Github/iotflows-remote-access/node_modules/node-red-node-tail/28-tail.js"
+            }
+        }
+    },
+    "node-red-contrib-iotflows": {
+        "name": "node-red-contrib-iotflows",
+        "version": "1.4.3",
+        "local": true,
+        "nodes": {
+            "iotflows": {
+                "name": "iotflows",
+                "types": [
+                    "datastream in",
+                    "datastream out",
+                    "alert channel out",
+                    "action start",
+                    "action finish",
+                    "mqtt-iotflows-broker"
+                ],
+                "enabled": true,
+                "local": true,
+                "module": "node-red-contrib-iotflows",
+                "file": "/Users/mahmoudpartodezfouli/Github/iotflows-remote-access/.node-red/node_modules/node-red-contrib-iotflows/iotflows.js"
             }
         }
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Copyright 2020 IoTFlows Inc. All rights reserved.
+ * Copyright 2019-2022 IoTFlows Inc. All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -215,7 +215,11 @@ function storeCredentials(username, password)
                 fs.mkdirSync('/etc/iotflows-remote-access');
             
             // store (override) credentials
-            await bash(`sudo bash -c 'sudo echo "IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n" > /etc/iotflows-remote-access/.env'`)            
+            // await bash(`sudo bash -c 'sudo echo "IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n" > /etc/iotflows-remote-access/.env'`)            
+            fs.writeFile('/etc/iotflows-remote-access/.env',`IOTFLOWS_REMOTE_ACCESS_USERNAME=${username}\r\nIOTFLOWS_REMOTE_ACCESS_PASSWORD=${password}\r\n`, function (err) {
+                // if (err) throw err;
+                // console.log('Credentials stored.');
+            });
             resolve()
         }
         catch(e) {
@@ -361,9 +365,6 @@ ExecStart=/usr/bin/env iotflows-remote-access
 WantedBy=multi-user.target`
 
     try{
-
-        if (!fs.existsSync('/etc/iotflows-remote-access'))
-            fs.mkdirSync('/etc/iotflows-remote-access');
                             
         if (!fs.existsSync('/etc/systemd')){
             fs.mkdirSync('/etc/systemd');

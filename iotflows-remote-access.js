@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IoTFlows Inc. All rights reserved.
+ * Copyright 2019-2022 IoTFlows Inc. All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,9 +54,7 @@ class iotflows_remote_access {
             
                 fs.writeFile('/etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile', key, function (err) {
                     console.log(err)               
-            
-                
-                self.bash('sudo chmod 400 /etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile')
+                    self.bash('sudo chmod 400 /etc/iotflows-remote-access/.key/.iotflows-remote-access.keyfile')
                 });
             })              
             return true;

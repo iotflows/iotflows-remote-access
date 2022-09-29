@@ -11,6 +11,7 @@ By installing this application on your device, you can:
    1. Data Streams: for secure real-time communication to the cloud (MQTTS/WebSockets)
    2. Alert Channels: for alerts and notifications (SMS/Email)
    3. Actions: to define a function that can be called with REST API / MQTTS commands from the cloud
+4. Remotely deploy and manage Docker containers
 
 ![IoTFlows-Remote-Access: Managed remote SSH and remote Node-RED for IoT gateways.](/images/iotflows-console.png)
 ![IoTFlows-Remote-Access: Managed remote SSH and remote Node-RED for IoT gateways.](/images/remote-nodered.png)

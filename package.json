@@ -1,6 +1,6 @@
 {
   "name": "@iotflows/iotflows-remote-access",
-  "version": "2.1.1",
+  "version": "2.1.3",
   "description": "IoTFlows Remote Access and health monitoring tool.",
   "main": "index.js",
   "scripts": {
@@ -41,7 +41,7 @@
     "mustache": "4.0.1",
     "node-fetch": "^2.6.1",
     "node-red": "^1.2.5",
-    "node-red-contrib-iotflows": "file:../../GitHub/iotflows-nodered-nodes/node-red-contrib-iotflows",
+    "node-red-contrib-iotflows": "^1.4.3",
     "on-headers": "1.0.2",
     "raw-body": "2.4.1",
     "request": "2.88.0",
